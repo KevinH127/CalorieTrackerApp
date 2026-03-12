@@ -2,20 +2,25 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { FoodInput } from "./components/FoodInput";
-import { DailyDashboard } from "./components/DailyDashboard";
-import { getEntriesForDateAction, addEntryAction, deleteEntryAction } from "./actions/entry";
+import { HistoryCalendar } from "../components/HistoryCalendar";
+import { DailyDashboard } from "../components/DailyDashboard";
+import { getEntriesForDateAction, addEntryAction, deleteEntryAction } from "../actions/entry";
 import { format } from "date-fns";
+import { useRouter } from "next/navigation";
 
-export default function Home() {
-  const { data: session } = useSession();
+export default function HistoryPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
   const [entries, setEntries] = useState([]);
-  const [selectedDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(new Date());
   const [isLoading, setIsLoading] = useState(true);
-  
-  const isToday = true;
 
-  // Load initial data for selected date
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/login");
+    }
+  }, [status, router]);
+
   useEffect(() => {
     async function loadData() {
       if (!session?.user?.id) return;
@@ -32,25 +37,6 @@ export default function Home() {
     
     loadData();
   }, [session, selectedDate]);
-
-  const handleFoodLogged = async (newEntryData) => {
-    if (!session?.user?.id) return;
-    
-    // Always log to the current timestamp for the main food input
-    const entryData = {
-       ...newEntryData,
-       timestamp: new Date().toISOString()
-    };
-    
-    const result = await addEntryAction(session.user.id, entryData);
-    if (result.success) {
-      if (isToday) {
-        setEntries((prev) => [result.entry, ...prev].sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp)));
-      }
-    } else {
-      alert(result.error || "Failed to save food entry to database.");
-    }
-  };
 
   const handleAddPastEntry = async (newEntryData) => {
     if (!session?.user?.id) return;
@@ -70,7 +56,7 @@ export default function Home() {
     }
   };
 
-  if (!session) {
+  if (status === "loading" || !session) {
     return (
       <main className="flex-1 flex flex-col items-center justify-center pt-8 pb-20 px-4 h-full">
          <div className="animate-pulse flex flex-col items-center">
@@ -85,21 +71,28 @@ export default function Home() {
     <main className="flex-1 flex flex-col pt-4 pb-20 px-4 md:px-8 max-w-6xl w-full mx-auto sm:pt-8 sm:pb-24">
       <header className="mb-10 text-center">
         <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight mb-4">
+          <span className="text-white">Your </span>
           <span className="bg-gradient-to-r from-emerald-400 to-blue-500 bg-clip-text text-transparent">
-            Calorie
+            History
           </span>
-          <span className="text-white">Tracker</span>
         </h1>
         <p className="text-neutral-400 max-w-lg mx-auto text-lg">
-          Log your meals using photo or text, and let AI calculate the calories instantly.
+          Review your past meals and add missing entries.
         </p>
       </header>
       
-      <div className="max-w-3xl mx-auto flex flex-col gap-12 w-full">
-        <FoodInput onFoodLogged={handleFoodLogged} />
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* Left Column: Calendar */}
+        <div className="lg:col-span-5 flex flex-col gap-8 lg:sticky lg:top-8 z-10 w-full">
+          <HistoryCalendar 
+             selectedDate={selectedDate} 
+             onSelectDate={setSelectedDate} 
+             userId={session.user.id}
+          />
+        </div>
         
-        {/* Dashboard List */}
-        <div>
+        {/* Right Column: Dashboard List */}
+        <div className="lg:col-span-7 w-full overflow-hidden">
           {isLoading ? (
              <div className="w-full h-64 bg-neutral-900/50 rounded-3xl animate-pulse border border-white/5" />
           ) : (
