@@ -25,13 +25,23 @@ export async function POST(req) {
     // Use gemini-1.5-flash as specified, which is fast and supports multimodal
     const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
 
-    const prompt = `
-      You are an expert nutritionist API. Analyze the provided food information (either text description or image).
-      Your primary goal is to provide the most accurate, real-world estimate of the total calories and protein for the described or pictured food.
+    const textPrompt = `
+      You are an expert nutritionist API. Analyze the provided food information (either text description).
+      Your primary goal is to provide the most accurate, real-world estimate of the total calories and protein for the described food.
       
       CRITICAL INSTRUCTION: You have access to Google Search. You must use it to look up the exact nutritional facts for the food if you do not know them with 100% certainty. Do NOT guess generic values if a search can provide accurate data for the specific brand or restaurant meal.
       
-      If your search returns a range of values for calories or protein, you MUST use the exact mathematical midpoint of that range.
+      If your search returns a range of values for calories or protein, you MUST use the mathematical midpoint of that range.
+    `;
+
+    const imagePrompt = `
+      You are an expert nutritionist API. Analyze the provided image of food.
+      
+      Step 1: Carefully examine the image and figure out exactly what the food is. Name it concisely.
+      Step 2: Once the food is identified, estimate the total calories and protein for the pictured portion.
+      Step 3: If you are unsure of the exact macros for the identified food, you MUST use Google Search to look up the accurate nutritional facts. Do NOT guess generic values if a search can provide accurate data.
+      
+      If your search returns a range of values for calories or protein, you MUST use the mathematical midpoint of that range.
       
       If you are completely unsure what the image contains and cannot search for it, set calories to 0, protein to 0, and name to "Unknown Food".
     `;
@@ -47,11 +57,11 @@ export async function POST(req) {
           },
           calories: {
             type: SchemaType.NUMBER,
-            description: "Estimated total calories as a number",
+            description: "Total calories as a number",
           },
           protein: {
             type: SchemaType.NUMBER,
-            description: "Estimated total protein in grams as a number",
+            description: "Total protein in grams as a number",
           },
         },
         required: ["foodName", "calories", "protein"],
@@ -78,13 +88,13 @@ export async function POST(req) {
         },
       ];
       result = await model.generateContent({
-        contents: [{ role: "user", parts: [{ text: prompt }, ...imageParts] }],
+        contents: [{ role: "user", parts: [{ text: imagePrompt }, ...imageParts] }],
         generationConfig,
         tools,
       });
     } else {
       // Handle text-only request
-      const fullPrompt = `${prompt}\n\nHere is the user's food description: "${text}"`;
+      const fullPrompt = `${textPrompt}\n\nHere is the user's food description: "${text}"`;
       result = await model.generateContent({
         contents: [{ role: "user", parts: [{ text: fullPrompt }] }],
         generationConfig,
