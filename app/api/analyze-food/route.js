@@ -31,6 +31,8 @@ export async function POST(req) {
       
       CRITICAL INSTRUCTION: You have access to Google Search. You must use it to look up the exact nutritional facts for the food if you do not know them with 100% certainty. Do NOT guess generic values if a search can provide accurate data for the specific brand or restaurant meal.
       
+      If your search returns a range of values for calories or protein, you MUST use the exact mathematical midpoint of that range.
+      
       If you are completely unsure what the image contains and cannot search for it, set calories to 0, protein to 0, and name to "Unknown Food".
     `;
 
