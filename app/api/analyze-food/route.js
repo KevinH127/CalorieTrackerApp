@@ -27,18 +27,11 @@ export async function POST(req) {
 
     const prompt = `
       You are an expert nutritionist API. Analyze the provided food information (either text description or image).
-      Estimate the total calories and protein for the described or pictured food.
+      Your primary goal is to provide the most accurate, real-world estimate of the total calories and protein for the described or pictured food.
       
-      CRITICAL INSTRUCTION: You must respond STRICTLY with valid JSON. Do not include markdown formatting (like \`\`\`json), explanations, or any other text.
+      CRITICAL INSTRUCTION: You have access to Google Search. You must use it to look up the exact nutritional facts for the food if you do not know them with 100% certainty. Do NOT guess generic values if a search can provide accurate data for the specific brand or restaurant meal.
       
-      Required Output Format:
-      {
-        "foodName": "A concise, descriptive name of the food",
-        "calories": <estimated total calories as a number>,
-        "protein": <estimated total protein in grams as a number>
-      }
-      
-      If you are unsure or the image does not contain food, provide a best guess or set calories to 0, protein to 0, and name to "Unknown Food".
+      If you are completely unsure what the image contains and cannot search for it, set calories to 0, protein to 0, and name to "Unknown Food".
     `;
 
     const generationConfig = {
@@ -63,6 +56,13 @@ export async function POST(req) {
       },
     };
 
+    // Enable Google Search Grounding
+    const tools = [
+      {
+        googleSearch: {}, // Required to be googleSearch in latest SDK versions for native search
+      },
+    ];
+
     let result;
 
     if (image) {
@@ -78,6 +78,7 @@ export async function POST(req) {
       result = await model.generateContent({
         contents: [{ role: "user", parts: [{ text: prompt }, ...imageParts] }],
         generationConfig,
+        tools,
       });
     } else {
       // Handle text-only request
@@ -85,6 +86,7 @@ export async function POST(req) {
       result = await model.generateContent({
         contents: [{ role: "user", parts: [{ text: fullPrompt }] }],
         generationConfig,
+        tools,
       });
     }
 
