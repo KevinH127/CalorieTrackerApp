@@ -101,6 +101,7 @@ export default function HistoryPage() {
               onDeleteEntry={handleDeleteEntry}
               selectedDate={selectedDate}
               onAddPastEntry={handleAddPastEntry}
+              userId={session.user.id}
             />
           )}
         </div>

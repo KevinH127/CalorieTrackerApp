@@ -108,6 +108,7 @@ export default function Home() {
               onDeleteEntry={handleDeleteEntry}
               selectedDate={selectedDate}
               onAddPastEntry={handleAddPastEntry}
+              userId={session.user.id}
             />
           )}
         </div>
