@@ -3,22 +3,27 @@
 import { useState, useEffect } from "react";
 import Calendar from "react-calendar";
 import { getAllUserEntriesAction } from "../actions/entry";
-import { format } from "date-fns";
+import { getGoalHistoryAction } from "../actions/goal";
+import { format, isSameDay } from "date-fns";
 import 'react-calendar/dist/Calendar.css';
 import { CalendarDays } from "lucide-react";
 
 export function HistoryCalendar({ selectedDate, onSelectDate, userId }) {
   const [entries, setEntries] = useState([]);
+  const [goals, setGoals] = useState([]);
   
   useEffect(() => {
-    async function loadAllEntries() {
+    async function loadData() {
       if (!userId) return;
-      const result = await getAllUserEntriesAction(userId);
-      if (result.success) {
-        setEntries(result.entries);
-      }
+      const [entriesRes, goalsRes] = await Promise.all([
+        getAllUserEntriesAction(userId),
+        getGoalHistoryAction(userId)
+      ]);
+      
+      if (entriesRes.success) setEntries(entriesRes.entries);
+      if (goalsRes.success) setGoals(goalsRes.goals);
     }
-    loadAllEntries();
+    loadData();
   }, [userId]);
 
   // Create a map of date string (YYYY-MM-DD) to total calories
@@ -28,15 +33,38 @@ export function HistoryCalendar({ selectedDate, onSelectDate, userId }) {
     return acc;
   }, {});
 
+  const getGoalForDate = (date) => {
+    // Goals are sorted by effectiveFrom desc
+    // Find the first goal where effectiveFrom <= date
+    return goals.find(g => new Date(g.effectiveFrom) <= date);
+  };
+
+  const isGoalMet = (date, calories) => {
+    const goal = getGoalForDate(date);
+    if (!goal) return null; // No goal set
+
+    const { calorieGoal, mode } = goal;
+    if (mode === "DEFICIT") return calories <= calorieGoal;
+    if (mode === "MAINTAIN") return Math.abs(calories - calorieGoal) <= 100;
+    if (mode === "SURPLUS") return calories >= calorieGoal;
+    return null;
+  };
+
   const tileContent = ({ date, view }) => {
     if (view === 'month') {
       const dateStr = format(date, 'yyyy-MM-dd');
       const cals = dailyCalories[dateStr];
       
-      if (cals) {
+      if (cals !== undefined) {
+        const metStatus = isGoalMet(date, cals);
+        let colorClass = "text-emerald-400 bg-emerald-500/10"; // Default
+        
+        if (metStatus === true) colorClass = "text-emerald-400 bg-emerald-500/15 ring-1 ring-emerald-500/30";
+        else if (metStatus === false) colorClass = "text-rose-400 bg-rose-500/15 ring-1 ring-rose-500/30";
+
         return (
           <div className="flex flex-col items-center justify-center mt-1">
-            <div className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-md">
+            <div className={`text-[10px] font-bold ${colorClass} px-1.5 py-0.5 rounded-md transition-all`}>
               {cals}
             </div>
           </div>
