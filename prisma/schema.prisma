@@ -8,11 +8,12 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  username     String   @unique
+  id           String        @id @default(cuid())
+  username     String        @unique
   passwordHash String
-  createdAt    DateTime @default(now())
+  createdAt    DateTime      @default(now())
   entries      Entry[]
+  goals        GoalHistory[]
 }
 
 model Entry {
@@ -24,4 +25,23 @@ model Entry {
   protein   Int      @default(0)
   timestamp DateTime
   createdAt DateTime @default(now())
+}
+
+model GoalHistory {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  calorieGoal    Int
+  proteinGoal    Int
+  mode           GoalMode @default(MAINTAIN)
+  effectiveFrom  DateTime @default(now())
+  createdAt      DateTime @default(now())
+
+  @@index([userId, effectiveFrom])
+}
+
+enum GoalMode {
+  DEFICIT
+  MAINTAIN
+  SURPLUS
 }
