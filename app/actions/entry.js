@@ -45,6 +45,34 @@ export async function deleteEntryAction(userId, entryId) {
   }
 }
 
+export async function updateEntryAction(userId, entryId, data) {
+  try {
+    // Ensure the entry belongs to the user before updating
+    const entry = await prisma.entry.findUnique({
+      where: { id: entryId }
+    });
+    
+    if (!entry || entry.userId !== userId) {
+      return { error: "Unauthorized or entry not found." };
+    }
+    
+    const updatedEntry = await prisma.entry.update({
+      where: { id: entryId },
+      data: {
+        foodName: data.foodName,
+        calories: parseInt(data.calories, 10),
+        protein: parseInt(data.protein, 10) || 0,
+      }
+    });
+    
+    revalidatePath("/");
+    return { success: true, entry: updatedEntry };
+  } catch (error) {
+    console.error("Failed to update entry:", error);
+    return { error: "Failed to update entry in database." };
+  }
+}
+
 export async function getEntriesForDateAction(userId, dateString) {
   try {
     // Parse the dateString (e.g. '2023-10-25') manually to avoid UTC offset issues bridging local days
