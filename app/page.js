@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { FoodInput } from "./components/FoodInput";
 import { DailyDashboard } from "./components/DailyDashboard";
-import { getEntriesForDateAction, addEntryAction, deleteEntryAction } from "./actions/entry";
+import { getEntriesForDateAction, addEntryAction, deleteEntryAction, updateEntryAction } from "./actions/entry";
 import { format } from "date-fns";
 
 export default function Home() {
@@ -70,6 +70,21 @@ export default function Home() {
     }
   };
 
+  const handleUpdateEntry = async (id, updatedData) => {
+    if (!session?.user?.id) return;
+    
+    const result = await updateEntryAction(session.user.id, id, updatedData);
+    if (result.success) {
+      setEntries((prev) => 
+        prev.map((entry) => (entry.id === id ? result.entry : entry))
+      );
+      return { success: true };
+    } else {
+      alert(result.error || "Failed to update food entry.");
+      return { success: false, error: result.error };
+    }
+  };
+
   if (!session) {
     return (
       <main className="flex-1 flex flex-col items-center justify-center pt-8 pb-20 px-4 h-full">
@@ -106,6 +121,7 @@ export default function Home() {
             <DailyDashboard 
               entries={entries} 
               onDeleteEntry={handleDeleteEntry}
+              onUpdateEntry={handleUpdateEntry}
               selectedDate={selectedDate}
               onAddPastEntry={handleAddPastEntry}
               userId={session.user.id}

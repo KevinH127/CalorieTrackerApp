@@ -8,7 +8,7 @@ import { Activity, Plus, Loader2, Target, Settings2 } from "lucide-react";
 import { GoalEditor } from "./GoalEditor";
 import { getGoalForDateAction, upsertGoalAction } from "../actions/goal";
 
-export function DailyDashboard({ entries, onDeleteEntry, selectedDate, onAddPastEntry, userId }) {
+export function DailyDashboard({ entries, onDeleteEntry, onUpdateEntry, selectedDate, onAddPastEntry, userId }) {
   const displayDateFormatted = format(selectedDate || new Date(), "EEEE, MMMM do");
   const isPastDate = format(selectedDate || new Date(), "yyyy-MM-dd") !== format(new Date(), "yyyy-MM-dd");
   
@@ -263,6 +263,7 @@ export function DailyDashboard({ entries, onDeleteEntry, selectedDate, onAddPast
                   key={entry.id} 
                   entry={entry} 
                   onDelete={onDeleteEntry} 
+                  onUpdate={onUpdateEntry}
                 />
               ))
             )}
