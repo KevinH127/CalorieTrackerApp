@@ -260,7 +260,7 @@ export function FoodInput({ onFoodLogged }) {
                  value={inputText}
                  onChange={(e) => setInputText(e.target.value)}
                  placeholder="E.g., 2 slices of pepperoni pizza and a salad"
-                 className="w-full bg-neutral-900/80 border border-white/10 text-white h-16 px-6 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all placeholder:text-neutral-500 shadow-inner"
+                 className="w-full bg-neutral-900/80 border border-white/10 text-white h-16 pl-6 pr-16 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all placeholder:text-neutral-500 shadow-inner"
                />
                <button
                   type="submit"

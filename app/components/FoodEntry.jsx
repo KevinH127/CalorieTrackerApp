@@ -85,7 +85,7 @@ export function FoodEntry({ entry, onDelete, onUpdate }) {
             </div>
           ) : (
             <>
-              <h4 className="font-medium text-white capitalize">{entry.foodName}</h4>
+              <h4 className="font-medium text-white capitalize break-words">{entry.foodName}</h4>
               <p className="text-sm text-neutral-400">
                 {entry.calories} calories • {entry.protein}g protein {timeString && `• ${timeString}`}
               </p>
